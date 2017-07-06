@@ -1,0 +1,532 @@
+<!--
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Most of the script was created by Amit Agarwal here: https://ctrlq.org/code/20039-google-picker-with-apps-script. 
+ *
+ * This work has been modified and redistributed by Miles Catlett, http://milescatlett.com
+ -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+    <style>
+    
+    label {
+      font-weight: bold;
+    }
+    input[text] {
+    width:100%
+    }
+      
+    #folder1-options, #folder2-options, #folder3-options, #folder4-options, #folder5-options, #folder6-options {
+      background-color: #eee;
+      border-color: #eee;
+      border-width: 5px;
+      border-style: solid;
+      display: none;
+    }
+    
+    #folder1-header,#folder2-header,#folder3-header,#folder4-header,#folder5-header,#folder6-header,
+    #button-bar,
+    #folder1-value, #folder2-value, #folder3-value, #folder4-value, #folder5-value, #folder6-value,
+    #folder1, #folder2, #folder3, #folder4, #folder5, #folder6{
+      margin-bottom: 10px;
+    }
+    </style>
+  <script type="text/javascript">
+    var DIALOG_DIMENSIONS = {
+        width: 600,
+        height: 225
+    };
+    var pickerApiLoaded = false;
+
+    function onApiLoad() {
+        gapi.load('picker', {
+            'callback': function() {
+                pickerApiLoaded = true;
+            }
+        });
+        google.script.run.withSuccessHandler(createPicker)
+            .withFailureHandler(showError).getOAuthToken();
+    }
+
+    function createPicker(token) {
+
+        if (pickerApiLoaded && token) {
+
+            var docsView = new google.picker.DocsView()
+                .setIncludeFolders(true)
+                .setMimeTypes('application/vnd.google-apps.folder')
+                .setSelectFolderEnabled(true);
+
+            var picker = new google.picker.PickerBuilder()
+                .addView(docsView)
+                .enableFeature(google.picker.Feature.NAV_HIDDEN)
+                .hideTitleBar()
+                .setSize(DIALOG_DIMENSIONS.width - 2, DIALOG_DIMENSIONS.height - 2)
+                .setOAuthToken(token)
+                .setCallback(pickerCallback)
+                .setOrigin('https://docs.google.com')
+                .build();
+
+            picker.setVisible(true);
+
+        } else {
+            showError('Unable to load the file picker.');
+        }
+    }
+
+    /**
+     * A callback function that extracts the chosen document's metadata from the
+     * response object. For details on the response object, see
+     * https://developers.google.com/picker/docs/result
+     *
+     * @param {object} data The response object.
+     */
+    function pickerCallback(data) {
+        var action = data[google.picker.Response.ACTION];
+        if (action == google.picker.Action.PICKED) {
+            var doc = data[google.picker.Response.DOCUMENTS][0];
+            var id = doc[google.picker.Document.ID];
+            var folderId = '<div class="alert alert-success alert-dismissable" style="margin-right:30px;">' +
+            '<strong>Folder ID</strong>: ' + id + '</div>';
+            // Show the ID of the Google Drive folder
+            document.getElementById('result').innerHTML = folderId;
+        }
+    }
+
+    function showError(message) {
+        document.getElementById('result').innerHTML = 'Error: ' + message;
+    }
+  </script>
+  </head>
+  <body>
+    <div>
+        <p id='result'></p>
+          <button type="button" class="btn btn-success btn-sm" id="my-button" style="margin-bottom:30px;">Reload Picker</button>
+    </div>
+    <p>Check a box to add an additional folder with rules.</p>
+    
+      <form>
+   <!-- Block #1 --> 
+        <div class="block">
+          <input type="checkbox" id="folder1-check">
+          <label for="folder1-check">Copy to additional folder if checked</label>
+        </div>
+        <div class="block form-group" id="folder1-options">
+          <label for="folder1-header">
+            If header...
+          </label>
+          <select class="width-100" id="folder1-header"></select>
+          <label for="folder1-value">
+            equals...
+          </label>
+          <input type="text" class="width-100" id="folder1-value">
+          <label for="folder1">then place copy in this folder (paste ID from above)...</label>
+          <textarea rows="2" cols="40" id="folder1"
+              class="width-100"></textarea>
+        </div>
+   <!-- Block #2 --> 
+        <div class="block">
+          <input type="checkbox" id="folder2-check">
+          <label for="folder2-check">Copy to additional folder if checked</label>
+        </div>
+        <div class="block form-group" id="folder2-options">
+          <label for="folder2-header">
+            If header...
+          </label>
+          <select class="width-100" id="folder2-header"></select>
+          <label for="folder2-value">
+            equals...
+          </label>
+          <input type="text" class="width-100" id="folder2-value">
+          <label for="folder2">then place copy in this folder (paste ID from above)...</label>
+          <textarea rows="2" cols="40" id="folder2"
+              class="width-100"></textarea>
+        </div>
+   <!-- Block #3 --> 
+        <div class="block">
+          <input type="checkbox" id="folder3-check">
+          <label for="folder3-check">Copy to additional folder if checked</label>
+        </div>
+        <div class="block form-group" id="folder3-options">
+          <label for="folder3-header">
+            If header...
+          </label>
+          <select class="width-100" id="folder3-header"></select>
+          <label for="folder3-value">
+            equals...
+          </label>
+          <input type="text" class="width-100" id="folder3-value">
+          <label for="folder3">then place copy in this folder (paste ID from above)...</label>
+          <textarea rows="2" cols="40" id="folder3"
+              class="width-100"></textarea>
+        </div>
+   <!-- Block #4 -->
+        <div class="block">
+          <input type="checkbox" id="folder4-check">
+          <label for="folder4-check">Copy to additional folder if checked</label>
+        </div>
+        <div class="block form-group" id="folder4-options">
+          <label for="folder4-header">
+            If header...
+          </label>
+          <select class="width-100" id="folder4-header"></select>
+          <label for="folder4-value">
+            equals...
+          </label>
+          <input type="text" class="width-100" id="folder4-value">
+          <label for="folder4">then place copy in this folder (paste ID from above)...</label>
+          <textarea rows="2" cols="40" id="folder4"
+              class="width-100"></textarea>
+        </div>
+   <!-- Block #5 --> 
+        <div class="block">
+          <input type="checkbox" id="folder5-check">
+          <label for="folder5-check">Copy to additional folder if checked</label>
+        </div>
+        <div class="block form-group" id="folder5-options">
+          <label for="folder5-header">
+            If header...
+          </label>
+          <select class="width-100" id="folder5-header"></select>
+          <label for="folder5-value">
+            equals...
+          </label>
+          <input type="text" class="width-100" id="folder5-value">
+          <label for="folder5">then place copy in this folder (paste ID from above)...</label>
+          <textarea rows="2" cols="40" id="folder5"
+              class="width-100"></textarea>
+        </div>
+   <!-- Block #6 --> 
+        <div class="block">
+          <input type="checkbox" id="folder6-check">
+          <label for="folder6-check">Copy to additional folder if checked</label>
+        </div>
+        <div class="block form-group" id="folder6-options">
+          <label for="folder6-header">
+            If header...
+          </label>
+          <select class="width-100" id="folder6-header"></select>
+          <label for="folder6-value">
+            equals...
+          </label>
+          <input type="text" class="width-100" id="folder6-value">
+          <label for="folder6">then place copy in this folder (paste ID from above)...</label>
+          <textarea rows="2" cols="40" id="folder6"
+              class="width-100"></textarea>
+        </div>
+ <!-- End of Blocks.... -->
+        <div class="block" id="button-bar">
+          <button class="action" id="save-settings">Save</button>
+        </div>
+      </form>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+    
+    <script>
+      /**
+       * On document load, assign required handlers to each element,
+       * and attempt to load any saved settings.
+       */
+      $(function() {
+        $("#my-button").click(onApiLoad);
+        $('#save-settings').click(saveSettingsToServer);
+    // 6 of these    
+        $('#folder1-check').click(toggleFolder1);
+        $('#folder2-check').click(toggleFolder2);
+        $('#folder3-check').click(toggleFolder3);
+        $('#folder4-check').click(toggleFolder4);
+        $('#folder5-check').click(toggleFolder5);
+        $('#folder6-check').click(toggleFolder6);
+        google.script.run
+           .withSuccessHandler(loadSettings)
+           .withFailureHandler(showStatus)
+           .withUserObject($('#button-bar').get())
+           .getSettings();
+      });
+    
+      /**
+       * Callback function that populates the notification options using
+       * previously saved values.
+       *
+       * @param {Object} settings The saved settings from the client.
+       */
+      function loadSettings(settings) {
+// Also need 6 of these           
+        $('#folder1-value').val(settings.folderValue1);
+        $('#folder2-value').val(settings.folderValue2);
+        $('#folder3-value').val(settings.folderValue3);
+        $('#folder4-value').val(settings.folderValue4);
+        $('#folder5-value').val(settings.folderValue5);
+        $('#folder6-value').val(settings.folderValue6);
+
+ // and 6 of these too
+        $('#folder1').val(settings.folderLoc1);
+        $('#folder2').val(settings.folderLoc2);
+        $('#folder3').val(settings.folderLoc3);
+        $('#folder4').val(settings.folderLoc4);
+        $('#folder5').val(settings.folderLoc5);
+        $('#folder6').val(settings.folderLoc6);
+
+// Numbers 1 through 6 of this if statement respondent    
+        if (settings.folderCheck1 === 'true') {
+          $('#folder1-check').prop('checked', true);
+          $('#folder1-check').show();
+        } 
+        if (settings.folderCheck2 === 'true') {
+          $('#folder2-check').prop('checked', true);
+          $('#folder2-check').show();
+        } 
+        if (settings.folderCheck3 === 'true') {
+          $('#folder3-check').prop('checked', true);
+          $('#folder3-check').show();
+        } 
+        if (settings.folderCheck4 === 'true') {
+          $('#folder4-check').prop('checked', true);
+          $('#folder4-check').show();
+        } 
+        if (settings.folderCheck5 === 'true') {
+          $('#folder5-check').prop('checked', true);
+          $('#folder5-check').show();
+        } 
+        if (settings.folderCheck6 === 'true') {
+          $('#folder6-check').prop('checked', true);
+          $('#folder6-check').show();
+        } 
+          
+
+        // Fill the respondent email select box with the
+        // titles given to the form's text Items. Also include
+        // the form Item IDs as values so that they can be
+        // easily recovered during the Save operation.
+
+//instance 1
+        for (var i = 0; i < settings.formItems.length; i++) {
+          var option = $('<option>').attr('value', settings.formItems[i]['id'])
+              .text(settings.formItems[i]['title']);
+          $('#folder1-header').append(option);
+        }
+        $('#folder1-header').val(settings.folderHeader1);
+//instance 2
+        for (var i = 0; i < settings.formItems.length; i++) {
+          var option = $('<option>').attr('value', settings.formItems[i]['id'])
+              .text(settings.formItems[i]['title']);
+          $('#folder2-header').append(option);
+        }
+        $('#folder2-header').val(settings.folderHeader2);
+//instance 3
+        for (var i = 0; i < settings.formItems.length; i++) {
+          var option = $('<option>').attr('value', settings.formItems[i]['id'])
+              .text(settings.formItems[i]['title']);
+          $('#folder3-header').append(option);
+        }
+        $('#folder3-header').val(settings.folderHeader3);
+//instance 4
+        for (var i = 0; i < settings.formItems.length; i++) {
+          var option = $('<option>').attr('value', settings.formItems[i]['id'])
+              .text(settings.formItems[i]['title']);
+          $('#folder4-header').append(option);
+        }
+        $('#folder4-header').val(settings.folderHeader4);
+//instance 5
+        for (var i = 0; i < settings.formItems.length; i++) {
+          var option = $('<option>').attr('value', settings.formItems[i]['id'])
+              .text(settings.formItems[i]['title']);
+          $('#folder5-header').append(option);
+        }
+        $('#folder5-header').val(settings.folderHeader5);
+//instance 6
+        for (var i = 0; i < settings.formItems.length; i++) {
+          var option = $('<option>').attr('value', settings.formItems[i]['id'])
+              .text(settings.formItems[i]['title']);
+          $('#folder6-header').append(option);
+        }
+        $('#folder6-header').val(settings.folderHeader6);       
+// end of instances
+      }
+      /*
+       * 1 - Toggles the visibility of the form sumbitter notification options.
+       */
+      function toggleFolder1() {
+        $('#status').remove();
+        if($('#folder1-check').is(':checked')) {
+          $('#folder1-options').show();
+        } else {
+          $('#folder1-options').hide();
+        }
+      } 
+      /**
+       * 2 - Toggles the visibility of the form sumbitter notification options.
+       */
+      function toggleFolder2() {
+        $('#status').remove();
+        if($('#folder2-check').is(':checked')) {
+          $('#folder2-options').show();
+        } else {
+          $('#folder2-options').hide();
+        }
+      }
+      /**
+       * 3 - Toggles the visibility of the form sumbitter notification options.
+       */
+      function toggleFolder3() {
+        $('#status').remove();
+        if($('#folder3-check').is(':checked')) {
+          $('#folder3-options').show();
+        } else {
+          $('#folder3-options').hide();
+        }
+      }
+      /**
+       * 4 - Toggles the visibility of the form sumbitter notification options.
+       */
+      function toggleFolder4() {
+        $('#status').remove();
+        if($('#folder4-check').is(':checked')) {
+          $('#folder4-options').show();
+        } else {
+          $('#folder4-options').hide();
+        }
+      }
+      /**
+       * 5 - Toggles the visibility of the form sumbitter notification options.
+       */
+      function toggleFolder5() {
+        $('#status').remove();
+        if($('#folder5-check').is(':checked')) {
+          $('#folder5-options').show();
+        } else {
+          $('#folder5-options').hide();
+        }
+      }
+      /**
+       * 6 - Toggles the visibility of the form sumbitter notification options.
+       */
+      function toggleFolder6() {
+        $('#status').remove();
+        if($('#folder6-check').is(':checked')) {
+          $('#folder6-options').show();
+        } else {
+          $('#folder6-options').hide();
+        }
+      }
+      /**
+       * Collects the options specified in the add-on sidebar and sends them to
+       * be saved as Properties on the server.
+       */
+      function saveSettingsToServer() {
+        this.disabled = true;
+        $('#status').remove();
+        var folderCheck1 = $('#folder1-check').is(':checked');
+        var folderCheck2 = $('#folder2-check').is(':checked');
+        var folderCheck3 = $('#folder3-check').is(':checked');
+        var folderCheck4 = $('#folder4-check').is(':checked');
+        var folderCheck5 = $('#folder5-check').is(':checked');
+        var folderCheck6 = $('#folder6-check').is(':checked');
+
+        var settings = {
+          'folderCheck1': folderCheck1,
+          'folderCheck2': folderCheck2,
+          'folderCheck3': folderCheck3,
+          'folderCheck4': folderCheck4,
+          'folderCheck5': folderCheck5,
+          'folderCheck6': folderCheck6
+        };
+    
+   // 6 - there are 6 of these  
+        // 1 - Only save respondent options if notify is turned on 
+        if (folderCheck1) {      
+          settings.folderHeader1 = $('#folder1-header').val();
+          settings.folderValue1 = $('#folder1-value').val();
+          settings.folderLoc1 = $('#folder1').val();
+        }
+        // 2 - Only save respondent options if notify is turned on
+        if (folderCheck2) {      
+          settings.folderHeader2 = $('#folder2-header').val();
+          settings.folderValue2 = $('#folder2-value').val();
+          settings.folderLoc2 = $('#folder2').val();
+        }
+        // 3 - Only save respondent options if notify is turned on
+        if (folderCheck3) {      
+          settings.folderHeader3 = $('#folder3-header').val();
+          settings.folderValue3 = $('#folder3-value').val();
+          settings.folderLoc3 = $('#folder3').val();
+        }
+        // 4 - Only save respondent options if notify is turned on
+        if (folderCheck4) {      
+          settings.folderHeader4 = $('#folder4-header').val();
+          settings.folderValue4 = $('#folder4-value').val();
+          settings.folderLoc4 = $('#folder4').val();
+        }
+        // 5 - Only save respondent options if notify is turned on
+        if (folderCheck5) {      
+          settings.folderHeader5 = $('#folder5-header').val();
+          settings.folderValue5 = $('#folder5-value').val();
+          settings.folderLoc5 = $('#folder5').val();
+        }
+        // 6 - Only save respondent options if notify is turned on
+        if (folderCheck6) {      
+          settings.folderHeader6 = $('#folder6-header').val();
+          settings.folderValue6 = $('#folder6-value').val();
+          settings.folderLoc6 = $('#folder6').val();
+        }       
+        
+        // Save the settings on the server
+        google.script.run
+            .withSuccessHandler(
+              function(msg, element) {
+                showStatus('Saved settings', $('#button-bar'));
+                element.disabled = false;
+              })
+            .withFailureHandler(
+              function(msg, element) {
+                showStatus(msg, $('#button-bar'));
+                element.disabled = false;
+              })
+            .withUserObject(this)
+            .saveSettings(settings);
+      }
+    
+      /**
+       * Inserts a div that contains an status message after a given element.
+       *
+       * @param {String} msg The status message to display.
+       * @param {Object} element The element after which to display the Status.
+       */
+      function showStatus(msg, element) {
+         var div = $('<div>')
+             .attr('id', 'status')
+             .attr('class','error')
+             .text(msg);
+        $(element).after(div);
+      }
+    </script>
+    <script type="text/javascript" src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
+  </body>
+</html>
