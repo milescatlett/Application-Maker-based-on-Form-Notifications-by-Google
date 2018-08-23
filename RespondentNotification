@@ -24,4 +24,4 @@
 
 <hr>
 
-<p><?= notice ?></p>
+<p style="font-size:80%"><?= notice ?></p>
