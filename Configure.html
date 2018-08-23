@@ -91,6 +91,8 @@
     <p>You can add "tagged" items, like <kbd>&lt;&lt;Name&gt;&gt;</kbd>, into the subject or body of the email to 
     personalize it. Use the Template Headers sidebar for possible tagged items.
     Hover over elements for more information.</p>
+    <p>Your daily mail quota limits the number of emails you can send out when your form is triggered. Your daily mail quota is 
+    <span id='daily-quota' class='bg-danger'></span>.</p>
       <form>
         <div class="block">
           <input type="checkbox" id="creator-notify">
@@ -264,6 +266,7 @@
        * @param {Object} settings The saved settings from the client.
        */
       function loadSettings(settings) {
+        $('#daily-quota').append(settings.dailyQuota.join(""));
         $('#creator-email').val(settings.creatorEmail);
         $('#response-step').val(!settings.responseStep ?
            10 : settings.responseStep);
@@ -326,7 +329,6 @@
       if (settings.respondentLink6 === 'true') {
         $('#respondent-link6').prop('checked', true);
       }
-
 // creating settings
         if (settings.creatorNotify === 'true') {
           $('#creator-notify').prop('checked', true);
