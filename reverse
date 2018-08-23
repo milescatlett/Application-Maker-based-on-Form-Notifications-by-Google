@@ -1,0 +1,219 @@
+<!--
+ * Copyright 2017 Miles Catlett. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+        <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+    <style>
+    .branding-below {
+      bottom: 54px;
+      top: 0;
+    }
+    
+    .branding-text {
+      left: 7px;
+      position: relative;
+      top: 3px;
+    }
+    
+    .logo {
+      vertical-align: middle;
+    }
+    
+    .width-100 {
+      width: 100%;
+      box-sizing: border-box;
+      -webkit-box-sizing : border-box;‌
+      -moz-box-sizing : border-box;
+    }
+    
+    label {
+      font-weight: bold;
+    }
+    
+    #multiple-options {
+      background-color: #eee;
+      border-color: #eee;
+      border-width: 5px;
+      border-style: solid;
+      display: none;
+    }
+    
+    #multiple-save,
+     {
+      margin-bottom: 10px;
+    }
+
+    </style>
+  </head>
+  <body>
+    <p>Check the box if you would like to reverse scale
+    any responses. Then select the questions you would like to reverse scale by holding down the <kbd>CTRL</kbd> key. 
+    The values you have previously saved are shown in the blue box below.</p>
+      <form>
+   <!-- Block #1 --> 
+        <div class="block">
+          <input type="checkbox" id="multiple-save">
+          <label for="multiple-save">Reverse scale selected questions</label>
+        </div>
+        <div class="block form-group" id="multiple-options">
+          <label for="multiple-select">
+            Select the questions you would like to reverse scale.
+          </label>
+          <select multiple class="width-100" id="multiple-select"></select>
+        </div>
+ <!-- End of Blocks.... -->
+        <div class="block" id="button-bar">
+          <button class="action" id="save-settings">Save</button>
+        </div>
+      </form>
+      <div style="margin-top:20px;" class="alert alert-info"><strong>Selected values:</strong>
+      <div id="result" style="margin-top:10px;"></div></div>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+    <script>
+      /**
+       * On document load, assign required handlers to each element,
+       * and attempt to load any saved settings.
+       */
+      $(function() {
+        $('#save-settings').click(saveSettingsToServer);
+        $('#multiple-save').click(toggleReverse);
+        google.script.run
+           .withSuccessHandler(loadSettings)
+           .withFailureHandler(showStatus)
+           .withUserObject($('#button-bar').get())
+           .getSettings();
+      });
+    
+      /**
+       * Callback function that populates the notification options using
+       * previously saved values.
+       *
+       * @param {Object} settings The saved settings from the client.
+       */
+      function loadSettings(settings) {
+ // creating settings
+        if (settings.reverseScale === 'true') {
+          $('#multiple-save').prop('checked', true);
+          $('#multiple-options').show();
+        }
+
+        // Fill the respondent email select box with the
+        // titles given to the form's text Items. Also include
+        // the form Item IDs as values so that they can be
+        // easily recovered during the Save operation.
+
+        for (var i = 0; i < settings.reverseItems.length; i++) {
+          var elipsis; 
+          if(settings.reverseItems[i]['title'].length > 80){ 
+            elipsis = "...";
+          } else {
+            elipsis = "";
+          }
+          var option = $('<option>').attr('value', settings.reverseItems[i]['id'])
+              .text(
+              jQuery.trim(settings.reverseItems[i]['title']).substring(0, 80).trim(this) + 
+              elipsis +
+              ' (' + settings.reverseItems[i]['id'] + ')');
+          $('#multiple-select').append(option);
+        }
+        if (settings.reverseScale == 'true') {
+           document.getElementById('result').innerHTML = settings.reverseSelect;
+        } else if (settings.reverseScale == 'false') {
+           document.getElementById('result').innerHTML = 'No values selected.';
+        }
+      }
+      /**
+       * Toggles the visibility of the form creator notification options.
+       */
+      function toggleReverse() {
+        $('#status').remove();
+        if ($('#multiple-save').is(':checked')) {
+          $('#multiple-options').show();
+        } else {
+          $('#multiple-options').hide();
+        }
+      }
+
+      /**
+       * Collects the options specified in the add-on sidebar and sends them to
+       * be saved as Properties on the server.
+       */
+      function saveSettingsToServer() {
+        this.disabled = true;
+        $('#status').remove();
+        var reverseScale = $('#multiple-save').is(':checked');
+
+        var settings = {
+          'reverseScale': reverseScale,
+        };
+    
+        // Only save creator options if notify is turned on
+        if (reverseScale) {
+          settings.reverseSelect = $("select option:selected").map(function(){ return this.value }).get().join(", ");
+        } else { 
+          settings.reverseSelect = 'No values selected.'; 
+        }
+        
+        // Save the settings on the server
+        google.script.run
+            .withSuccessHandler(
+              function(msg, element) {
+                showStatus('Saved settings', $('#button-bar'));
+                element.disabled = false;
+              })
+            .withFailureHandler(
+              function(msg, element) {
+                showStatus(msg, $('#button-bar'));
+                element.disabled = false;
+              })
+            .withUserObject(this)
+            .saveSettings(settings);
+            
+            document.getElementById('result').innerHTML = settings.reverseSelect;
+      }
+    
+      /**
+       * Inserts a div that contains an status message after a given element.
+       *
+       * @param {String} msg The status message to display.
+       * @param {Object} element The element after which to display the Status.
+       */
+      function showStatus(msg, element) {
+         var div = $('<div>')
+             .attr('id', 'status')
+             .attr('class','error')
+             .text(msg);
+        $(element).after(div);
+      }
+    </script>
+  </body>
+</html>
